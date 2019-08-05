@@ -20,83 +20,50 @@ function queryAllItems() {
         console.log(res[i].id + " | " + res[i].product_name + " | " + res[i].department_name + " | $" + res[i].price + " | " + res[i].stock_quantity);
       }
       console.log("-----------------------------------");
-      choice();
+      purchase();
     });
   }
-  function choice(){
-  inquirer.prompt([
-    {
-    name: "product",
-    message: "What would you like to buy?",
-    type: "list",
-    choices: [
-      "Blue-Eyes White Dragon",
-      "Base Set Charizard 1st Edition",
-      "Liliana of the Veil",
-      "Dark Magician",
-      "Base Set Blastoise",
-      "Gideon Blackblade Mythic Foil",
-      "Red-Eyes Black Dragon Anniversary Pack",
-      "Base Set Venusaur",
-      "Jace, Vryn's Prodigy",
-      "Millenium Eyes Restrict"
-    ]
-    }.then(function(answer){
-      switch (answer.action) {
-        case "Blue-Eyes White Dragon":
-          artistSearch();
-          break;
-  
-        case "Base Set Charizard 1st Edition":
-          multiSearch();
-          break;
-  
-        case "Liliana of the Veil":
-          rangeSearch();
-          break;
-  
-        case "Dark Magician":
-          songSearch();
-          break;
-  
-        case "Base Set Blastoise":
-          songAndAlbumSearch();
-          break;
-        
-        case "Gideon Blackblade Mythic Foil":
-          songAndAlbumSearch();
-          break;
-        
-        case "Red-Eyes Black Dragon Anniversary Pack":
-          songAndAlbumSearch();
-          break;
-
-        case "Base Set Venusaur":
-            songAndAlbumSearch();
-            break;
-
-        case "Jace, Vryn's Prodigy":
-          songAndAlbumSearch();
-          break;
-
-        case "Millenium Eyes Restrict":
-          songAndAlbumSearch();
-          break;
-      }
-    })
-  ])
-}
 
 function purchase(){
   inquirer.prompt([
     {
-    name: "purchase",
-    message: "How many would you like to buy? (Numbers only)",
-    type: "number"
+    name: "product",
+    message: "What would you like to buy?",
+    type: "list"
+    },
+    {
+      name: "quantity",
+      type: "number",
+      message: "How many would you like?"
     }.then(function(answer){
-      connection.query("UPDATE * FROM products", function(err) {
+      connection.query("SELECT * FROM products", function(err, resDB) {
+      if (err) throw err;
+      var item = ans.product
+      if(ans.quantity <= resDB[item].stock_quantity){
+        var newQuantity = (resDB[item].stock_quantity - ans.quantity)
 
-        if (err) throw err;
+        connection.query(
+          "UPDATE products SET ? WHERE ?",
+          [
+            {
+              stock_quantity: newQuantity
+            },
+            {
+              product_name: ans.item
+            }
+          ],
+          function(error){
+            if(error) throw err;
+            console.log("Order Successful!");
+            var total = (ans.quantity * resDB[item].price)
+            console.log("The total is: $" + total)
+            connection.end();
+          }
+        )
+      }else{
+        console.log("Order Failed, Insufficient Quantity")
+        connection.end()
+      }
 
       })
     })
